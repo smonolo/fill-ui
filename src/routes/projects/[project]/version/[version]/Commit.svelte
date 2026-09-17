@@ -3,15 +3,16 @@
   import { Button } from "$lib/components/ui/button";
   import { slide } from "svelte/transition";
   import { page } from "$app/state";
-  import { getCommitGitHubUrl } from "$lib/utils/github";
+  import { getCommitUrl, getForgeLabel, type GitRepoLike } from "$lib/utils/github";
   import CopyToClipboard from "$lib/components/custom/CopyToClipboard.svelte";
 
   interface Props {
     commit: Commit;
     projectKey?: string;
+    gitRepository?: GitRepoLike | null;
   }
 
-  let { commit, projectKey = page.params.project }: Props = $props();
+  let { commit, projectKey = page.params.project, gitRepository }: Props = $props();
 
   let collapsed = $state(true);
   let commitLines = $derived(commit.message.split(/\r?\n/));
@@ -19,7 +20,8 @@
   let firstLine = $derived(commitLines[0] ?? "");
   let remainingLines = $derived(commitLines.slice(1).join("\n"));
 
-  let commitUrl = $derived(getCommitGitHubUrl(projectKey, commit.sha));
+  let commitUrl = $derived(getCommitUrl(gitRepository, projectKey, commit.sha));
+  let forgeLabel = $derived(getForgeLabel(gitRepository));
   let trimmedSha = $derived(commit.sha ? commit.sha.trim() : "");
   let shortSha = $derived(trimmedSha.slice(0, 7));
 </script>
@@ -32,7 +34,7 @@
         target="_blank"
         rel="noopener noreferrer external"
         class="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
-        title="View commit on GitHub ({trimmedSha})"
+        title="View commit on {forgeLabel} ({trimmedSha})"
       >
         <span>{shortSha}</span>
         <span class="iconify size-3 lucide--external-link"></span>

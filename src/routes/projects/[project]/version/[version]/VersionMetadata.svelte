@@ -19,7 +19,7 @@
   import { page } from "$app/state";
   import { AUTH_CTX } from "$lib/auth.svelte";
   import { toast } from "svelte-sonner";
-  import { getProjectGitHubRepo, getProjectGitHubUrl } from "$lib/utils/github";
+  import { getRepositoryName, getRepositoryUrl, getForgeLabel, type GitRepoLike } from "$lib/utils/github";
 
   const auth = AUTH_CTX.get();
 
@@ -33,14 +33,16 @@
     family: Family;
     support: Support;
     java?: Java | null;
+    gitRepository?: GitRepoLike | null;
   };
 
   interface Props {
     version: Version;
+    gitRepository?: GitRepoLike | null;
     editMode?: boolean;
   }
 
-  let { version, editMode = $bindable(false) }: Props = $props();
+  let { version, gitRepository, editMode = $bindable(false) }: Props = $props();
 
   function overridesFamilyJava(): boolean {
     return version.java !== undefined && version.java !== null;
@@ -202,8 +204,10 @@
   }
 
   let effectiveJava = $derived(version.java ?? version.family.java);
-  let githubRepoName = $derived(getProjectGitHubRepo(page.params.project));
-  let githubRepoUrl = $derived(getProjectGitHubUrl(page.params.project));
+  let effectiveRepo = $derived(gitRepository ?? version.gitRepository);
+  let repoName = $derived(getRepositoryName(effectiveRepo, page.params.project));
+  let repoUrl = $derived(getRepositoryUrl(effectiveRepo, page.params.project));
+  let forgeLabel = $derived(getForgeLabel(effectiveRepo));
 </script>
 
 <section class="space-y-4">
@@ -240,18 +244,18 @@
         <div class="font-medium">Family</div>
         <div class="mt-0.5">{version.family.key}</div>
       </div>
-      {#if githubRepoUrl}
+      {#if repoUrl}
         <div class="text-sm">
           <div class="font-medium">Repository</div>
           <div class="mt-0.5">
             <a
-              href={githubRepoUrl}
+              href={repoUrl}
               target="_blank"
               rel="noopener noreferrer external"
               class="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-              title="View repository on GitHub"
+              title="View repository on {forgeLabel}"
             >
-              <span>{githubRepoName}</span>
+              <span>{repoName}</span>
               <span class="iconify size-3 lucide--external-link"></span>
             </a>
           </div>
